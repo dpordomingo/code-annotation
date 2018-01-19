@@ -9,7 +9,7 @@ import { composeWithDevTools } from 'redux-devtools-extension';
 import thunk from 'redux-thunk';
 import rootReducer, { middlewares } from './state';
 import { enhancer as routerEnhancer } from './state/routes';
-import './index.css';
+import './index.scss';
 import App from './App';
 import registerServiceWorker from './registerServiceWorker';
 
