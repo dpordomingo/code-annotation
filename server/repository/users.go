@@ -1,34 +1,60 @@
 package repository
 
 import (
+	"database/sql"
 	"fmt"
 
 	"github.com/src-d/code-annotation/server/model"
 )
 
-// Users is the User repository
+// Users repository
 type Users struct {
-	users []*model.User
+	DB *sql.DB
 }
 
-// Create stores a user into the DB
-func (r *Users) Create(m *model.User) error {
-	for _, u := range r.users {
-		if u.ID == m.ID {
-			return nil
-		}
+// Create stores a User into the DB, and returns that new User
+func (repo *Users) Create(
+	login, username, avatarURL string, role model.Role) (*model.User, error) {
+
+	_, err := repo.DB.Exec(
+		"INSERT INTO users (login, username, avatar_url, role) VALUES ($1, $2, $3, $4)",
+		login, username, avatarURL, role)
+
+	if err != nil {
+		return nil, err
 	}
-	r.users = append(r.users, m)
-	return nil
+
+	return repo.Get(login)
 }
 
-// Get returns the User identified by the passed ID.
-// If the user does not exist, if returns no user nor error
-func (r *Users) Get(id int) (*model.User, error) {
-	for _, u := range r.users {
-		if u.ID == id {
-			return u, nil
-		}
+// getWithQuery builds a User from the given sql QueryRow. If the User does not
+// exist, it returns nil, nil
+func (repo *Users) getWithQuery(queryRow *sql.Row) (*model.User, error) {
+	var user model.User
+
+	err := queryRow.Scan(&user.ID, &user.Login, &user.Username, &user.AvatarURL, &user.Role)
+
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, nil
+	case err != nil:
+		return nil, fmt.Errorf("Error getting user from the DB: %v", err)
+	default:
+		return &user, nil
 	}
-	return nil, fmt.Errorf("user with id %d not found", id)
+}
+
+// Get returns the User with the given GitHub login name. If the User does not
+// exist, it returns nil, nil
+func (repo *Users) Get(login string) (*model.User, error) {
+	// TODO: escape login string
+	return repo.getWithQuery(
+		repo.DB.QueryRow("SELECT * FROM users WHERE login='$1'", login))
+}
+
+// GetByID returns the User with the given ID. If the User does not
+// exist, it returns nil, nil
+func (repo *Users) GetByID(id int) (*model.User, error) {
+	return repo.getWithQuery(
+		repo.DB.QueryRow("SELECT * FROM users WHERE id=$1", id))
 }
