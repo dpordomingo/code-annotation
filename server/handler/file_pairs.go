@@ -13,7 +13,7 @@ import (
 
 // GetFilePairDetails returns a function that returns a *serializer.Response
 // with the details of the requested FilePair
-func GetFilePairDetails() RequestProcessFunc {
+func GetFilePairDetails(repo *repository.FilePairs) RequestProcessFunc {
 	return func(r *http.Request) (*serializer.Response, error) {
 		requestedPairID := chi.URLParam(r, "pairId")
 		pairID, err := strconv.Atoi(requestedPairID)
@@ -23,11 +23,11 @@ func GetFilePairDetails() RequestProcessFunc {
 			)
 		}
 
-		pairFiles, err := repository.GetFilePairFor(pairID)
+		pairFiles, err := repo.GetByID(pairID)
 		if err != nil {
 			return nil, serializer.NewHTTPError(http.StatusNotFound, "no file-pair found")
 		}
 
-		return serializer.NewFilePairsResponse(pairFiles), nil
+		return serializer.NewFilePairResponse(pairFiles), nil
 	}
 }

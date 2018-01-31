@@ -26,13 +26,13 @@ const (
 
 // DB groups a sql.DB and the driver used to initialize it
 type DB struct {
-	sqlDB  *sql.DB
+	SQLDB  *sql.DB
 	driver driver
 }
 
 // Close closes the database, releasing any open resources.
 func (db *DB) Close() error {
-	return db.sqlDB.Close()
+	return db.SQLDB.Close()
 }
 
 const (
@@ -146,7 +146,7 @@ func Bootstrap(db DB) error {
 	for _, table := range tables {
 		cmd := strings.Replace(table, incrementTypePlaceholder, colType, 1)
 
-		if _, err := db.sqlDB.Exec(cmd); err != nil {
+		if _, err := db.SQLDB.Exec(cmd); err != nil {
 			return err
 		}
 	}
@@ -157,9 +157,9 @@ func Bootstrap(db DB) error {
 // Initialize populates the DB with default values. It is safe to call on a
 // DB that is already initialized
 func Initialize(db DB) error {
-	_, err := db.sqlDB.Exec(insertExperiments, defaultExperimentID)
+	_, err := db.SQLDB.Exec(insertExperiments, defaultExperimentID)
 	if db.driver == postgres && err == nil {
-		db.sqlDB.Exec(alterExperimentsSequence)
+		db.SQLDB.Exec(alterExperimentsSequence)
 	}
 
 	// Errors are ignored to allow initialization over an existing DB
@@ -187,12 +187,12 @@ func ImportFiles(originDB DB, destDB DB, opts Options) (success, failures int64,
 
 	logger := opts.getLogger()
 
-	rows, err := originDB.sqlDB.Query(selectFiles)
+	rows, err := originDB.SQLDB.Query(selectFiles)
 	if err != nil {
 		return 0, 0, err
 	}
 
-	tx, err := destDB.sqlDB.Begin()
+	tx, err := destDB.SQLDB.Begin()
 	if err != nil {
 		return 0, 0, err
 	}

@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/src-d/code-annotation/server/model"
-
 	"github.com/gorilla/sessions"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
@@ -41,7 +39,8 @@ func NewOAuth(clientID, clientSecret string) *OAuth {
 	}
 }
 
-type githubUser struct {
+// GithubUser represents the user response returned by the GitHub auth.
+type GithubUser struct {
 	ID        int    `json:"id"`
 	Login     string `json:"login"`
 	Username  string `json:"name"`
@@ -74,7 +73,7 @@ func (o *OAuth) ValidateState(r *http.Request, state string) error {
 }
 
 // GetUser gets user from provider and return user model
-func (o *OAuth) GetUser(ctx context.Context, code string) (*model.User, error) {
+func (o *OAuth) GetUser(ctx context.Context, code string) (*GithubUser, error) {
 	token, err := o.config.Exchange(ctx, code)
 	if err != nil {
 		return nil, fmt.Errorf("oauth exchange error: %s", err)
@@ -85,15 +84,11 @@ func (o *OAuth) GetUser(ctx context.Context, code string) (*model.User, error) {
 		return nil, fmt.Errorf("can't get user from github: %s", err)
 	}
 	defer resp.Body.Close()
-	var user githubUser
+	var user GithubUser
 	err = json.NewDecoder(resp.Body).Decode(&user)
 	if err != nil {
 		return nil, fmt.Errorf("can't parse github response: %s", err)
 	}
-	return &model.User{
-		ID:        user.ID,
-		Login:     user.Login,
-		Username:  user.Username,
-		AvatarURL: user.AvatarURL,
-	}, nil
+
+	return &user, nil
 }

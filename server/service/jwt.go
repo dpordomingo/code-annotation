@@ -77,7 +77,7 @@ func (j *JWT) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-// GetUserID gets user id setted by JWT middleware
+// GetUserID gets user ID set by the JWT middleware, or 0 if was not set
 func GetUserID(ctx context.Context) int {
 	id, _ := ctx.Value(userIDKey).(int)
 	return id

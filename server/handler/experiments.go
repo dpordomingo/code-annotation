@@ -13,7 +13,7 @@ import (
 
 // GetExperimentDetails returns a function that returns a *serializer.Response
 // with the details of a requested experiment
-func GetExperimentDetails() RequestProcessFunc {
+func GetExperimentDetails(repo *repository.Experiments) RequestProcessFunc {
 	return func(r *http.Request) (*serializer.Response, error) {
 		requestedExperimentID := chi.URLParam(r, "experimentId")
 		experimentID, err := strconv.Atoi(requestedExperimentID)
@@ -23,7 +23,7 @@ func GetExperimentDetails() RequestProcessFunc {
 			)
 		}
 
-		experiment, err := repository.GetExperimentByID(experimentID)
+		experiment, err := repo.GetByID(experimentID)
 		if err != nil {
 			return nil, serializer.NewHTTPError(http.StatusNotFound, "no experiment found")
 		}

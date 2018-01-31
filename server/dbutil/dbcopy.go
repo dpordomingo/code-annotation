@@ -23,7 +23,7 @@ func Copy(originDB DB, destDB DB, opts Options) error {
 
 	logger := opts.getLogger()
 
-	tx, err := destDB.sqlDB.Begin()
+	tx, err := destDB.SQLDB.Begin()
 	if err != nil {
 		return err
 	}
@@ -42,7 +42,7 @@ func Copy(originDB DB, destDB DB, opts Options) error {
 		// SELECT * FROM <TABLE>
 		selectCmd := strings.Replace(dumpAllSQL, tablePlaceholder, table, 1)
 
-		rows, err := originDB.sqlDB.Query(selectCmd)
+		rows, err := originDB.SQLDB.Query(selectCmd)
 		if err != nil {
 			return err
 		}
@@ -128,7 +128,7 @@ func fixSequences(db DB, logger *log.Logger) {
 		selectCmd := strings.Replace(maxIDSQL, tablePlaceholder, table, 1)
 
 		var maxID sql.NullInt64
-		err := db.sqlDB.QueryRow(selectCmd).Scan(&maxID)
+		err := db.SQLDB.QueryRow(selectCmd).Scan(&maxID)
 
 		if err != nil {
 			// With 0 rows there is no MAX(id)
@@ -141,10 +141,10 @@ func fixSequences(db DB, logger *log.Logger) {
 			newMax := fmt.Sprintf("%v", maxID.Int64+1)
 
 			// for some reason Exec() fails to substitute $1 with the argument
-			//_, err := db.sqlDB.Exec(alterCmd, newMax)
+			//_, err := db.SQLDB.Exec(alterCmd, newMax)
 
 			alterCmd = strings.Replace(alterCmd, "$1", newMax, 1)
-			_, err := db.sqlDB.Exec(alterCmd)
+			_, err := db.SQLDB.Exec(alterCmd)
 
 			if err != nil {
 				logger.Printf("Error while executing %q:\n%v\n", alterCmd, err)

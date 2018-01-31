@@ -17,7 +17,7 @@ import (
 // GetAssignmentsForUserExperiment returns a function that returns a *serializer.Response
 // with the assignments for the logged user and a passed experiment
 // if these assignments do not already exist, they are created in advance
-func GetAssignmentsForUserExperiment() RequestProcessFunc {
+func GetAssignmentsForUserExperiment(repo *repository.Assignments) RequestProcessFunc {
 	return func(r *http.Request) (*serializer.Response, error) {
 		requestedExperimentID := chi.URLParam(r, "experimentId")
 		experimentID, err := strconv.Atoi(requestedExperimentID)
@@ -28,9 +28,13 @@ func GetAssignmentsForUserExperiment() RequestProcessFunc {
 		}
 
 		userID := service.GetUserID(r.Context())
-		assignments, err := repository.GetAssignmentsFor(userID, experimentID)
+		if userID == 0 {
+			return nil, fmt.Errorf("no user id in context")
+		}
+
+		assignments, err := repo.GetAll(userID, experimentID)
 		if err == repository.ErrNoAssignmentsInitialized {
-			if assignments, err = repository.CreateAssignmentsFor(userID, experimentID); err != nil {
+			if assignments, err = repo.Initialize(userID, experimentID); err != nil {
 				return nil, fmt.Errorf("no available assignments")
 			}
 		}
@@ -45,14 +49,20 @@ type assignmentRequest struct {
 }
 
 // SaveAssignment returns a function that saves the user answers as passed in the body request
-func SaveAssignment() RequestProcessFunc {
+func SaveAssignment(repo *repository.Assignments) RequestProcessFunc {
 	return func(r *http.Request) (*serializer.Response, error) {
-		requestedAssignmentID := chi.URLParam(r, "assignmentId")
-		assignmentID, err := strconv.Atoi(requestedAssignmentID)
+		requestedPairID := chi.URLParam(r, "pairId")
+		pairID, err := strconv.Atoi(requestedPairID)
 		if err != nil {
 			return nil, serializer.NewHTTPError(
-				http.StatusBadRequest, fmt.Sprintf("wrong format in assignment ID sent; received %s", requestedAssignmentID),
+				http.StatusBadRequest,
+				fmt.Sprintf("wrong format in file pair ID sent; received %s", requestedPairID),
 			)
+		}
+
+		userID := service.GetUserID(r.Context())
+		if userID == 0 {
+			return nil, fmt.Errorf("no user id in context")
 		}
 
 		var assignmentRequest assignmentRequest
@@ -66,7 +76,8 @@ func SaveAssignment() RequestProcessFunc {
 			return nil, fmt.Errorf("payload could not be read")
 		}
 
-		if err := repository.UpdateAssignment(assignmentID, assignmentRequest.Answer, assignmentRequest.Duration); err != nil {
+		err = repo.Update(userID, pairID, assignmentRequest.Answer, assignmentRequest.Duration)
+		if err != nil {
 			return nil, fmt.Errorf("answer could not be saved")
 		}
 

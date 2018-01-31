@@ -18,8 +18,8 @@ func Me(usersRepo *repository.Users) RequestProcessFunc {
 			return nil, fmt.Errorf("no user id in context")
 		}
 
-		u, err := usersRepo.Get(uID)
-		if err != nil {
+		u, err := usersRepo.GetByID(uID)
+		if err != nil || u == nil {
 			return nil, serializer.NewHTTPError(http.StatusNotFound, "user not found")
 		}
 
