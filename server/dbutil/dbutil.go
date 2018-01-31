@@ -41,7 +41,7 @@ const (
 	posgresIncrementType     = "SERIAL"
 
 	createUsers = `CREATE TABLE IF NOT EXISTS users (
-			id <INCREMENT_TYPE>, github_username TEXT, auth TEXT, role INTEGER,
+			id <INCREMENT_TYPE>, login TEXT UNIQUE, username TEXT, avatar_url TEXT, role TEXT,
 			PRIMARY KEY (id))`
 	createExperiments = `CREATE TABLE IF NOT EXISTS experiments (
 			id <INCREMENT_TYPE>, name TEXT UNIQUE, description TEXT,
@@ -56,7 +56,7 @@ const (
 		FOREIGN KEY(experiment_id) REFERENCES experiments(id))`
 	createAssignments = `CREATE TABLE IF NOT EXISTS assignments (
 			user_id INTEGER, pair_id INTEGER, experiment_id INTEGER,
-			answer INTEGER, duration INTEGER,
+			answer TEXT, duration INTEGER,
 			PRIMARY KEY (user_id, pair_id),
 			FOREIGN KEY (user_id) REFERENCES users(id),
 			FOREIGN KEY (pair_id) REFERENCES file_pairs(id),
