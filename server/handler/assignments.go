@@ -5,13 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 
 	"github.com/src-d/code-annotation/server/repository"
 	"github.com/src-d/code-annotation/server/serializer"
 	"github.com/src-d/code-annotation/server/service"
-
-	"github.com/go-chi/chi"
 )
 
 // GetAssignmentsForUserExperiment returns a function that returns a *serializer.Response
@@ -19,12 +16,9 @@ import (
 // if these assignments do not already exist, they are created in advance
 func GetAssignmentsForUserExperiment(repo *repository.Assignments) RequestProcessFunc {
 	return func(r *http.Request) (*serializer.Response, error) {
-		requestedExperimentID := chi.URLParam(r, "experimentId")
-		experimentID, err := strconv.Atoi(requestedExperimentID)
+		experimentID, err := urlParamInt(r, "experimentId")
 		if err != nil {
-			return nil, serializer.NewHTTPError(
-				http.StatusBadRequest, fmt.Sprintf("wrong format in experiment ID sent; received %s", requestedExperimentID),
-			)
+			return nil, err
 		}
 
 		userID := service.GetUserID(r.Context())
@@ -51,13 +45,9 @@ type assignmentRequest struct {
 // SaveAssignment returns a function that saves the user answers as passed in the body request
 func SaveAssignment(repo *repository.Assignments) RequestProcessFunc {
 	return func(r *http.Request) (*serializer.Response, error) {
-		requestedPairID := chi.URLParam(r, "pairId")
-		pairID, err := strconv.Atoi(requestedPairID)
+		pairID, err := urlParamInt(r, "pairId")
 		if err != nil {
-			return nil, serializer.NewHTTPError(
-				http.StatusBadRequest,
-				fmt.Sprintf("wrong format in file pair ID sent; received %s", requestedPairID),
-			)
+			return nil, err
 		}
 
 		userID := service.GetUserID(r.Context())

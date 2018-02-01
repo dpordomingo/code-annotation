@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
+	"github.com/go-chi/chi"
 	"github.com/src-d/code-annotation/server/serializer"
 	"github.com/src-d/code-annotation/server/service"
 )
@@ -63,4 +65,20 @@ func write(w http.ResponseWriter, r *http.Request, response *serializer.Response
 	w.Header().Add("content-type", "application/json")
 	w.WriteHeader(statusCode)
 	w.Write(content)
+}
+
+// URLParamInt returns the url parameter from a http.Request object. If the
+// param cannot be converted to int, it returns a serializer.NewHTTPError
+func urlParamInt(r *http.Request, key string) (val int, err error) {
+	str := chi.URLParam(r, key)
+	val, err = strconv.Atoi(str)
+
+	if err != nil {
+		val = 0
+		err = serializer.NewHTTPError(http.StatusBadRequest,
+			fmt.Sprintf("Wrong format for URL parameter %q; received %q", key, str),
+		)
+	}
+
+	return
 }
