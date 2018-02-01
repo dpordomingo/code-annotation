@@ -13,20 +13,21 @@ type Experiments struct {
 }
 
 // Create stores an Experiment into the DB, and returns that new Experiment
-func (repo *Experiments) Create(name, description string) (*model.Experiment, error) {
+func (repo *Experiments) Create(exp *model.Experiment) error {
 	// TODO: for now this method is not used, but if we allow experiment creation
 	// the name should be safely escaped
-	return nil, fmt.Errorf("Not implemented")
+	return fmt.Errorf("Not implemented")
 
 	_, err := repo.DB.Exec(
 		"INSERT INTO experiments (name, description) VALUES ($1, $2)",
-		name, description)
+		exp.Name, exp.Description)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return repo.Get(name)
+	exp, err = repo.Get(exp.Name)
+	return err
 }
 
 // getWithQuery builds an Experiment from the given sql QueryRow. If the

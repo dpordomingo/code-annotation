@@ -51,7 +51,13 @@ func OAuthCallback(
 		}
 
 		if user == nil {
-			user, err = userRepo.Create(ghUser.Login, ghUser.Username, ghUser.AvatarURL, model.Requester)
+			user = &model.User{
+				Login:     ghUser.Login,
+				Username:  ghUser.Username,
+				AvatarURL: ghUser.AvatarURL,
+				Role:      model.Requester}
+
+			err = userRepo.Create(user)
 			if err != nil {
 				logger.Errorf("can't create user: %s", err)
 				write(w, r, serializer.NewEmptyResponse(), err)

@@ -56,19 +56,19 @@ func (repo *Assignments) Initialize(userID int, experimentID int) ([]*model.Assi
 }
 
 // Create stores an Assignment into the DB, and returns that new Assignment
-func (repo *Assignments) Create(
-	userID, pairID, experimentID, answer, duration int) (*model.Assignment, error) {
+func (repo *Assignments) Create(as *model.Assignment) error {
 
 	_, err := repo.DB.Exec(
 		`INSERT INTO assignments (user_id, pair_id, experiment_id, answer, duration)
 		VALUES ($1, $2, $3, $4, $5)`,
-		userID, pairID, experimentID, answer, duration)
+		as.UserID, as.PairID, as.ExperimentID, as.Answer, as.Duration)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return repo.Get(userID, pairID)
+	as, err = repo.Get(as.UserID, as.PairID)
+	return err
 }
 
 // getWithQuery builds a Assignment from the given sql QueryRow. If the

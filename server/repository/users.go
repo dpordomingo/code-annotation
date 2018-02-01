@@ -13,18 +13,18 @@ type Users struct {
 }
 
 // Create stores a User into the DB, and returns that new User
-func (repo *Users) Create(
-	login, username, avatarURL string, role model.Role) (*model.User, error) {
+func (repo *Users) Create(user *model.User) error {
 
 	_, err := repo.DB.Exec(
 		"INSERT INTO users (login, username, avatar_url, role) VALUES ($1, $2, $3, $4)",
-		login, username, avatarURL, role)
+		user.Login, user.Username, user.AvatarURL, user.Role)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return repo.Get(login)
+	user, err = repo.Get(user.Login)
+	return err
 }
 
 // getWithQuery builds a User from the given sql QueryRow. If the User does not
