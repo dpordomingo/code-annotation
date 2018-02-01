@@ -43,7 +43,7 @@ func main() {
 	jwt := service.NewJWT(jwtConfig.SigningKey)
 
 	// start the router
-	router := server.Router(logger, jwt, oauth, conf.UIDomain, db.SQLDB, "build")
+	router := server.Router(logger, jwt, oauth, conf.UIDomain, db.SQLDB(), "build")
 	logger.Info("running...")
 	err = http.ListenAndServe(fmt.Sprintf("%s:%d", conf.Host, conf.Port), router)
 	logger.Fatal(err)
