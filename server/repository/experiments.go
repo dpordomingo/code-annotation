@@ -19,7 +19,7 @@ func (repo *Experiments) Create(name, description string) (*model.Experiment, er
 	return nil, fmt.Errorf("Not implemented")
 
 	_, err := repo.DB.Exec(
-		"INSERT INTO experiments (name, description) VALUES ('$1', '$2')",
+		"INSERT INTO experiments (name, description) VALUES ($1, $2)",
 		name, description)
 
 	if err != nil {
@@ -54,7 +54,7 @@ func (repo *Experiments) Get(name string) (*model.Experiment, error) {
 	return nil, fmt.Errorf("Not implemented")
 
 	return repo.getWithQuery(
-		repo.DB.QueryRow("SELECT * FROM experiments WHERE name='$1'", name))
+		repo.DB.QueryRow("SELECT * FROM experiments WHERE name=$1", name))
 }
 
 // GetByID returns the Experiment with the given ID. If the Experiment does not

@@ -49,7 +49,7 @@ func (repo *Users) getWithQuery(queryRow *sql.Row) (*model.User, error) {
 func (repo *Users) Get(login string) (*model.User, error) {
 	// TODO: escape login string
 	return repo.getWithQuery(
-		repo.DB.QueryRow("SELECT * FROM users WHERE login='$1'", login))
+		repo.DB.QueryRow("SELECT * FROM users WHERE login=$1", login))
 }
 
 // GetByID returns the User with the given ID. If the User does not
