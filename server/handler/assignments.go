@@ -21,9 +21,9 @@ func GetAssignmentsForUserExperiment(repo *repository.Assignments) RequestProces
 			return nil, err
 		}
 
-		userID := service.GetUserID(r.Context())
-		if userID == 0 {
-			return nil, fmt.Errorf("no user id in context")
+		userID, err := service.GetUserID(r.Context())
+		if err != nil {
+			return nil, err
 		}
 
 		assignments, err := repo.GetAll(userID, experimentID)
@@ -50,9 +50,9 @@ func SaveAssignment(repo *repository.Assignments) RequestProcessFunc {
 			return nil, err
 		}
 
-		userID := service.GetUserID(r.Context())
-		if userID == 0 {
-			return nil, fmt.Errorf("no user id in context")
+		userID, err := service.GetUserID(r.Context())
+		if err != nil {
+			return nil, err
 		}
 
 		var assignmentRequest assignmentRequest
