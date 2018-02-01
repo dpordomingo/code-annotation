@@ -1,5 +1,7 @@
 package model
 
+import "database/sql"
+
 // User of the application; can be Requester or Workers
 type User struct {
 	ID        int
@@ -21,7 +23,7 @@ type Assignment struct {
 	UserID       int
 	PairID       int
 	ExperimentID int
-	Answer       string
+	Answer       sql.NullString
 	Duration     int
 }
 
@@ -61,5 +63,4 @@ var Answers = map[string]string{
 	"maybe": "maybe",
 	"no":    "no",
 	"skip":  "skip",
-	"":      "",
 }

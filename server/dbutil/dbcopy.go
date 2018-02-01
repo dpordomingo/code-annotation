@@ -102,9 +102,9 @@ func insertCmd(table string, n int) string {
 	return cmd + "(" + strings.Join(nArgs, ",") + ")"
 }
 
-// genericVals returns a slice of interface{}, each one a pointer to a string
+// genericVals returns a slice of interface{}, each one a pointer to a NullString
 func genericVals(nColumns int) []interface{} {
-	columnVals := make([]string, nColumns)
+	columnVals := make([]sql.NullString, nColumns)
 	columnValsPtr := make([]interface{}, nColumns)
 
 	for i := range columnVals {

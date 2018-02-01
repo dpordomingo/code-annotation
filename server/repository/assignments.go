@@ -34,14 +34,13 @@ func (repo *Assignments) Initialize(userID int, experimentID int) ([]*model.Assi
 		return nil, fmt.Errorf("Error getting file_pairs from the DB: %v", err)
 	}
 
-	answer := ""
 	duration := 0
 
 	for rows.Next() {
 		var pairID int
 		rows.Scan(&pairID)
 
-		_, err := insert.Exec(userID, pairID, experimentID, answer, duration)
+		_, err := insert.Exec(userID, pairID, experimentID, nil, duration)
 		if err != nil {
 			return nil, fmt.Errorf("DB error: %v", err)
 		}

@@ -83,19 +83,25 @@ func NewExperimentResponse(e *model.Experiment) *Response {
 }
 
 type assignmentResponse struct {
-	UserID       int    `json:"userId"`
-	PairID       int    `json:"pairId"`
-	ExperimentID int    `json:"experimentId"`
-	Answer       string `json:"answer"`
-	Duration     int    `json:"duration"`
+	UserID       int     `json:"userId"`
+	PairID       int     `json:"pairId"`
+	ExperimentID int     `json:"experimentId"`
+	Answer       *string `json:"answer"`
+	Duration     int     `json:"duration"`
 }
 
 // NewAssignmentsResponse returns a Response for the passed Assignment
 func NewAssignmentsResponse(as []*model.Assignment) *Response {
 	assignments := make([]assignmentResponse, len(as))
 	for i, a := range as {
+		var answer *string
+
+		if a.Answer.Valid {
+			answer = &a.Answer.String
+		}
+
 		assignments[i] = assignmentResponse{a.UserID, a.PairID,
-			a.ExperimentID, string(a.Answer), a.Duration}
+			a.ExperimentID, answer, a.Duration}
 	}
 
 	return newResponse(assignments)
