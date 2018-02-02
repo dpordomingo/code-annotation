@@ -13,6 +13,9 @@ import (
 	"golang.org/x/oauth2/github"
 )
 
+// StateGenerator is a func that returns a random state
+type StateGenerator func() string
+
 // OAuthConfig defines enviroment variables for OAuth
 type OAuthConfig struct {
 	ClientID     string `envconfig:"CLIENT_ID" required:"true"`
@@ -21,12 +24,20 @@ type OAuthConfig struct {
 
 // OAuth service abstracts OAuth implementation
 type OAuth struct {
-	config *oauth2.Config
-	store  *sessions.CookieStore
+	config         *oauth2.Config
+	store          *sessions.CookieStore
+	stateGenerator StateGenerator
+}
+
+// DefaultStateGenerator generates a random string using rand.Rand
+func DefaultStateGenerator() string {
+	bytes := make([]byte, 16)
+	rand.Read(bytes)
+	return base64.URLEncoding.EncodeToString(bytes)
 }
 
 // NewOAuth return new OAuth service
-func NewOAuth(clientID, clientSecret string) *OAuth {
+func NewOAuth(clientID, clientSecret string, generator StateGenerator) *OAuth {
 	config := &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
@@ -34,8 +45,9 @@ func NewOAuth(clientID, clientSecret string) *OAuth {
 		Endpoint:     github.Endpoint,
 	}
 	return &OAuth{
-		config: config,
-		store:  sessions.NewCookieStore([]byte(clientSecret)),
+		config:         config,
+		store:          sessions.NewCookieStore([]byte(clientSecret)),
+		stateGenerator: generator,
 	}
 }
 
@@ -48,16 +60,17 @@ type GithubUser struct {
 }
 
 // MakeAuthURL returns string for redirect to provider
-func (o *OAuth) MakeAuthURL(w http.ResponseWriter, r *http.Request) string {
-	b := make([]byte, 16)
-	rand.Read(b)
-	state := base64.URLEncoding.EncodeToString(b)
+func (o *OAuth) MakeAuthURL() (string, string) {
+	state := o.stateGenerator()
+	return o.config.AuthCodeURL(state), state
+}
 
+// StoreState stores the passed state into the session
+func (o *OAuth) StoreState(w http.ResponseWriter, r *http.Request, state string) error {
 	session, _ := o.store.Get(r, "sess")
 	session.Values["state"] = state
-	session.Save(r, w)
 
-	return o.config.AuthCodeURL(state)
+	return session.Save(r, w)
 }
 
 // ValidateState protects the user from CSRF attacks

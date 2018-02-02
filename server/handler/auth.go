@@ -15,7 +15,12 @@ import (
 // Login handler redirects user to oauth provider
 func Login(oAuth *service.OAuth) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		url := oAuth.MakeAuthURL(w, r)
+		url, state := oAuth.MakeAuthURL()
+		if err := oAuth.StoreState(w, r, state); err != nil {
+			write(w, r, serializer.NewEmptyResponse(), serializer.NewHTTPError(http.StatusInternalServerError, err.Error()))
+			return
+		}
+
 		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 	}
 }
