@@ -35,7 +35,7 @@ func OAuthCallback(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := oAuth.ValidateState(r, r.FormValue("state")); err != nil {
-			write(w, r, serializer.NewEmptyResponse(), serializer.NewHTTPError(http.StatusBadRequest))
+			write(w, r, serializer.NewEmptyResponse(), serializer.NewHTTPError(http.StatusPreconditionFailed))
 			return
 		}
 
@@ -60,9 +60,10 @@ func OAuthCallback(
 				Login:     ghUser.Login,
 				Username:  ghUser.Username,
 				AvatarURL: ghUser.AvatarURL,
-				Role:      model.Requester}
+				Role:      model.Worker}
 
 			err = userRepo.Create(user)
+
 			if err != nil {
 				logger.Errorf("can't create user: %s", err)
 				write(w, r, serializer.NewEmptyResponse(), err)

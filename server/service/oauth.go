@@ -9,12 +9,10 @@ import (
 	"net/http"
 
 	"github.com/gorilla/sessions"
+	netContext "golang.org/x/net/context"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 )
-
-// StateGenerator is a func that returns a random state
-type StateGenerator func() string
 
 // OAuthConfig defines enviroment variables for OAuth
 type OAuthConfig struct {
@@ -24,10 +22,15 @@ type OAuthConfig struct {
 
 // OAuth service abstracts OAuth implementation
 type OAuth struct {
-	config         *oauth2.Config
-	store          *sessions.CookieStore
-	stateGenerator StateGenerator
+	config             *oauth2.Config
+	store              *sessions.CookieStore
+	stateGenerator     StateGenerator
+	oauthClientBuilder OAuthClientBuilder
+	oauthExchangeFunc  OauthExchangeFunc
 }
+
+// StateGenerator is a func that returns a random state
+type StateGenerator func() string
 
 // DefaultStateGenerator generates a random string using rand.Rand
 func DefaultStateGenerator() string {
@@ -36,8 +39,35 @@ func DefaultStateGenerator() string {
 	return base64.URLEncoding.EncodeToString(bytes)
 }
 
+// OAuthClientBuilder is a func that returns an http.Client for certain oauth configuration
+type OAuthClientBuilder func(ctx context.Context, token *oauth2.Token, conf *oauth2.Config) Getter
+
+// NewOAuthClient returns a http.Client for the passed oauth conf, token and context
+func NewOAuthClient(ctx context.Context, token *oauth2.Token, conf *oauth2.Config) Getter {
+	return conf.Client(ctx, token)
+}
+
+// Getter modelates a the Get method of an http.Client
+type Getter interface {
+	Get(url string) (*http.Response, error)
+}
+
+// OauthExchangeFunc is a func that converts an authorization code into a token.
+type OauthExchangeFunc func(netContext.Context, string, *oauth2.Config) (*oauth2.Token, error)
+
+// DefaultOauthExchangeFunc converts an authorization code into a token using the passed oauth config
+func DefaultOauthExchangeFunc(ctx netContext.Context, code string, conf *oauth2.Config) (*oauth2.Token, error) {
+	return conf.Exchange(ctx, code)
+}
+
 // NewOAuth return new OAuth service
-func NewOAuth(clientID, clientSecret string, generator StateGenerator) *OAuth {
+func NewOAuth(
+	clientID string,
+	clientSecret string,
+	generator StateGenerator,
+	oauthClientBuilder OAuthClientBuilder,
+	oauthExchangeFunc OauthExchangeFunc,
+) *OAuth {
 	config := &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
@@ -45,9 +75,11 @@ func NewOAuth(clientID, clientSecret string, generator StateGenerator) *OAuth {
 		Endpoint:     github.Endpoint,
 	}
 	return &OAuth{
-		config:         config,
-		store:          sessions.NewCookieStore([]byte(clientSecret)),
-		stateGenerator: generator,
+		config:             config,
+		store:              sessions.NewCookieStore([]byte(clientSecret)),
+		stateGenerator:     generator,
+		oauthClientBuilder: oauthClientBuilder,
+		oauthExchangeFunc:  oauthExchangeFunc,
 	}
 }
 
@@ -63,6 +95,11 @@ type GithubUser struct {
 func (o *OAuth) MakeAuthURL() (string, string) {
 	state := o.stateGenerator()
 	return o.config.AuthCodeURL(state), state
+}
+
+func (o *OAuth) GetState(r *http.Request) interface{} {
+	session, _ := o.store.Get(r, "sess")
+	return session.Values["state"]
 }
 
 // StoreState stores the passed state into the session
@@ -87,11 +124,11 @@ func (o *OAuth) ValidateState(r *http.Request, state string) error {
 
 // GetUser gets user from provider and return user model
 func (o *OAuth) GetUser(ctx context.Context, code string) (*GithubUser, error) {
-	token, err := o.config.Exchange(ctx, code)
+	token, err := o.oauthExchangeFunc(ctx, code, o.config)
 	if err != nil {
 		return nil, fmt.Errorf("oauth exchange error: %s", err)
 	}
-	client := o.config.Client(ctx, token)
+	client := o.oauthClientBuilder(ctx, token, o.config)
 	resp, err := client.Get("https://api.github.com/user")
 	if err != nil {
 		return nil, fmt.Errorf("can't get user from github: %s", err)
