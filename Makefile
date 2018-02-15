@@ -38,6 +38,8 @@ DOT_ENV ?= .env
 -include $(DOT_ENV)
 export $(shell [ -f "$(DOT_ENV)" ] && sed 's/=.*//' $(DOT_ENV))
 
+# Include Makefile.dev
+-include Makefile.dev
 
 # Frontend
 

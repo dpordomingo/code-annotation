@@ -1,0 +1,64 @@
+DOCKERFILE_DEV ?= Dockerfile.dev
+
+IMPORT_EXPORT_DIR ?= $(shell pwd)/internal-db/
+IMPORT_EXPORT_VOLUME ?= /var/code-annotation
+
+DEV_IMAGE_NAME ?= srcd/code-annotation
+DEV_IMAGE_TAG ?= dev
+
+DEV_IMAGE ?= $(DEV_IMAGE_NAME):$(DEV_IMAGE_TAG)
+DEV_CONTAINER_NAME ?= code-annotaion
+
+$(ENV):
+	touch $(ENV)
+
+$(IMPORT_EXPORT_DIR):
+	mkdir -p $(IMPORT_EXPORT_DIR)
+
+dev-image-remove:
+	@docker rmi --force $(DEV_IMAGE) || echo "No image to delete"
+
+dev-image-rebuild: dev-image-remove
+	docker build --file $(DOCKERFILE_DEV) --tag $(DEV_IMAGE) .
+
+dev-container-stop:
+	@docker stop $(DEV_CONTAINER_NAME) || echo "No container to stop"
+
+dev-container-remove: dev-container-stop
+	@docker rm --force $(DEV_CONTAINER_NAME) || echo "No container to delete"
+
+dev-container-run: $(ENV) $(IMPORT_EXPORT_DIR)
+	docker run --detach --interactive --tty \
+		--env-file $(ENV) \
+		--publish 8080:8080 \
+		--volume $(IMPORT_EXPORT_DIR):$(IMPORT_EXPORT_VOLUME) \
+		--name $(DEV_CONTAINER_NAME) \
+		$(DEV_IMAGE)
+
+dev-container-sh:
+	docker exec --interactive --tty $(DEV_CONTAINER_NAME) /bin/bash
+
+dev-container-logs:
+	docker logs --follow $(DEV_CONTAINER_NAME)
+
+dev-rebuild-and-run: dev-container-remove dev-image-rebuild dev-examples-regenerate dev-container-run
+
+dev-container-rerun: dev-container-remove dev-examples-regenerate dev-container-run
+
+
+# DB
+
+import = ./import
+$(import):
+	go build ./cli/import/...
+
+dev-examples-drop:
+	rm -f $(IMPORT_EXPORT_DIR)/sample.db
+
+dev-examples-generate: $(IMPORT_EXPORT_DIR)
+	sqlite3 $(IMPORT_EXPORT_DIR)/sample.db < cli/import/examples/example.sql
+
+dev-examples-import: $(import)
+	$(import) $(IMPORT_EXPORT_DIR)/sample.db sqlite://$(IMPORT_EXPORT_DIR)internal.db
+
+dev-examples-regenerate: dev-examples-drop dev-examples-generate dev-examples-import
