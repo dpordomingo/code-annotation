@@ -53,6 +53,7 @@ func Router(
 	r.Use(middleware.Recoverer)
 	r.Use(lg.RequestLogger(logger))
 	r.Use(cors.New(corsOptions).Handler)
+	r.Use(handler.LoggingTestMiddleware)
 
 	r.Get("/login", handler.Login(oauth))
 	r.Get("/oauth-callback", handler.OAuthCallback(oauth, jwt, userRepo, uiDomain))
@@ -105,6 +106,18 @@ func Router(
 	})
 
 	r.Get("/version", handler.APIHandlerFunc(handler.Version(version)))
+
+	/*
+	 * Testing logs
+	 */
+	r.Get("/destroy", handler.Get(handler.Log(handler.Fatal)))
+	r.Get("/manual-panic", handler.Get(handler.Log(handler.ManualPanic)))
+	r.Get("/panic", handler.Get(handler.Log(handler.Panic)))
+	r.Get("/error", handler.Get(handler.Log(handler.Error)))
+	r.Get("/warn", handler.Get(handler.Log(handler.Warning)))
+	r.Get("/info", handler.Get(handler.Log(handler.Info)))
+	r.Get("/debug", handler.Get(handler.Log(handler.Debug)))
+	r.Get("/unk", handler.Get(handler.Log(handler.Unk)))
 
 	r.Get("/static/*", static.ServeHTTP)
 	r.Get("/*", static.ServeHTTP)
