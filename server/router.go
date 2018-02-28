@@ -51,8 +51,8 @@ func Router(
 	r := chi.NewRouter()
 
 	r.Use(middleware.Recoverer)
-	r.Use(cors.New(corsOptions).Handler)
 	r.Use(lg.RequestLogger(logger))
+	r.Use(cors.New(corsOptions).Handler)
 
 	r.Get("/login", handler.Login(oauth))
 	r.Get("/oauth-callback", handler.OAuthCallback(oauth, jwt, userRepo, uiDomain))
