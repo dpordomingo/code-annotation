@@ -55,7 +55,7 @@ func Router(
 	r.Use(lg.RequestLogger(logger))
 
 	r.Get("/login", handler.Login(oauth))
-	r.Get("/oauth-callback", handler.OAuthCallback(oauth, jwt, userRepo, uiDomain, logger))
+	r.Get("/oauth-callback", handler.OAuthCallback(oauth, jwt, userRepo, uiDomain))
 
 	r.Route("/api", func(r chi.Router) {
 		r.Use(jwt.Middleware)

@@ -9,7 +9,7 @@ import (
 	"github.com/src-d/code-annotation/server/serializer"
 	"github.com/src-d/code-annotation/server/service"
 
-	"github.com/sirupsen/logrus"
+	"github.com/pressly/lg"
 )
 
 // Login handler redirects user to oauth provider
@@ -26,9 +26,10 @@ func OAuthCallback(
 	jwt *service.JWT,
 	userRepo *repository.Users,
 	uiDomain string,
-	logger logrus.FieldLogger,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		logger := lg.RequestLog(r)
+
 		if err := oAuth.ValidateState(r, r.FormValue("state")); err != nil {
 			errorText := "The state passed is incorrect or expired"
 			write(
