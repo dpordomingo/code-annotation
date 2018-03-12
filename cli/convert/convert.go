@@ -49,11 +49,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 
 	"github.com/jessevdk/go-flags"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/src-d/code-annotation/server/service"
 )
 
 const desc = `Converts a JSON file with pairs of files to the output database.
@@ -91,35 +91,37 @@ func main() {
 		os.Exit(1)
 	}
 
+	logger := service.NewLogger("dev")
+
 	source, err := ioutil.ReadFile(opts.Args.Input)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	destDB, err := sql.Open("sqlite3", opts.Args.Output)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 	defer destDB.Close()
 
 	_, err = destDB.Exec(createTableSQL)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	var data [][3]interface{}
 	if err := json.Unmarshal(source, &data); err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	tx, err := destDB.Begin()
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	insert, err := tx.Prepare(insertSQL)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	var success, failures int64
@@ -135,7 +137,7 @@ func main() {
 
 		if err != nil {
 			failures++
-			log.Println(err)
+			logger.Errorf(err.Error())
 		}
 
 		rowsAffected, _ := res.RowsAffected()
@@ -143,12 +145,12 @@ func main() {
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Fatalf("Failed to commit the transaction:\n%v", err)
+		logger.Fatalf("Failed to commit the transaction:\n%v", err)
 	}
 
-	fmt.Printf("Converted %v file pairs successfully\n", success)
+	logger.Info("Converted %v file pairs successfully\n", success)
 
 	if failures > 0 {
-		fmt.Printf("Failed to convert %v file pairs\n", failures)
+		logger.Errorf("Failed to convert %v file pairs\n", failures)
 	}
 }

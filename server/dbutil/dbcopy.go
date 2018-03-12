@@ -22,10 +22,7 @@ var tables = []string{"users", "experiments", "file_pairs", "assignments"}
 
 // Copy dumps the contents of the origin DB into the destination DB. The
 // destination DB should be bootstrapped, but empty
-func Copy(originDB DB, destDB DB, opts Options) error {
-
-	logger := opts.getLogger()
-
+func Copy(originDB DB, destDB DB, logger logrus.FieldLogger) error {
 	tx, err := destDB.Begin()
 	if err != nil {
 		return err
@@ -34,7 +31,7 @@ func Copy(originDB DB, destDB DB, opts Options) error {
 	committed := false
 	defer func() {
 		if !committed {
-			logger.Println("The transaction will be rolled back")
+			logger.Warn("The transaction will be rolled back")
 			tx.Rollback()
 		}
 	}()
@@ -77,7 +74,7 @@ func Copy(originDB DB, destDB DB, opts Options) error {
 			success += rowsAffected
 		}
 
-		logger.Printf("Inserted %v rows into table %v\n", success, table)
+		logger.Infof("Inserted %v rows into table %v\n", success, table)
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -147,7 +144,7 @@ func fixSequences(db DB, logger logrus.FieldLogger) {
 			_, err := db.Exec(alterCmd)
 
 			if err != nil {
-				logger.Printf("Error while executing %q:\n%v\n", alterCmd, err)
+				logger.Errorf("Error while executing %q:\n%v\n", alterCmd, err)
 			}
 		}
 	}

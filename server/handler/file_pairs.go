@@ -108,8 +108,8 @@ func UploadFilePairs(db *dbutil.DB) RequestProcessFunc {
 			return nil, fmt.Errorf("can't open input db %s", err)
 		}
 
-		success, failures, err := dbutil.ImportFiles(
-			inputDB, *db, dbutil.Options{Logger: lg.RequestLog(r)}, experimentID)
+		logger := lg.RequestLog(r)
+		success, failures, err := dbutil.ImportFiles(inputDB, *db, logger, experimentID)
 		if err != nil {
 			return nil, err
 		}

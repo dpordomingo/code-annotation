@@ -40,12 +40,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/jessevdk/go-flags"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/src-d/code-annotation/server/dbutil"
+	"github.com/src-d/code-annotation/server/service"
 )
 
 const desc = `Extracts features from a JSON file with pairs of files to the output database.
@@ -90,35 +90,37 @@ func main() {
 		os.Exit(1)
 	}
 
+	logger := service.NewLogger("dev")
+
 	destDB, err := dbutil.Open(opts.Args.Output, true)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 	defer destDB.Close()
 
 	source, err := os.OpenFile(opts.Args.Input, os.O_RDONLY, 0)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	_, err = destDB.Exec(createFeaturesSQL)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	var data [][3]interface{}
 	if err := json.NewDecoder(source).Decode(&data); err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	tx, err := destDB.Begin()
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	insert, err := tx.Prepare(insertSQL)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	var success, failures int64
@@ -141,7 +143,7 @@ func main() {
 
 			if err != nil {
 				failures++
-				log.Println(err)
+				logger.Error(err)
 				continue
 			}
 
@@ -156,12 +158,12 @@ func main() {
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Fatalf("Failed to commit the transaction:\n%v", err)
+		logger.Fatalf("Failed to commit the transaction:\n%v", err)
 	}
 
-	fmt.Printf("Extracted and saved %v features successfully\n", success)
+	logger.Infof("Extracted and saved %v features successfully\n", success)
 
 	if failures > 0 {
-		fmt.Printf("Failed to extract and save %v features\n", failures)
+		logger.Errorf("Failed to extract and save %v features\n", failures)
 	}
 }

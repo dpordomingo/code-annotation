@@ -5,7 +5,7 @@ import (
 )
 
 // NewLogger returns a logrus Logger
-func NewLogger(env string) *logrus.Logger {
+func NewLogger(env string) logrus.FieldLogger {
 	logger := logrus.New()
 
 	if env == "dev" {
@@ -13,6 +13,7 @@ func NewLogger(env string) *logrus.Logger {
 			FullTimestamp:   true,
 			TimestampFormat: "2006-01-02 15:04:05",
 		}
+
 		logger.SetLevel(logrus.DebugLevel)
 	} else {
 		logger.Formatter = &logrus.JSONFormatter{
@@ -22,7 +23,8 @@ func NewLogger(env string) *logrus.Logger {
 				logrus.FieldKeyMsg:   "message",
 			},
 		}
-		logger.SetLevel(logrus.WarnLevel)
+
+		logger.SetLevel(logrus.InfoLevel)
 	}
 
 	return logger

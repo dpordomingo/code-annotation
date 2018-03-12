@@ -17,10 +17,10 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/src-d/code-annotation/server/dbutil"
+	"github.com/src-d/code-annotation/server/service"
 
 	"github.com/jessevdk/go-flags"
 )
@@ -66,34 +66,36 @@ func main() {
 		os.Exit(1)
 	}
 
+	logger := service.NewLogger("dev")
+
 	originDB, err := dbutil.OpenSQLite(opts.Args.Input, true)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 	defer originDB.Close()
 
 	destDB, err := dbutil.Open(opts.Args.Output, false)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 	defer destDB.Close()
 
 	if err = dbutil.Bootstrap(destDB); err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
 	if err = dbutil.Initialize(destDB); err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
-	success, failures, err := dbutil.ImportFiles(originDB, destDB, dbutil.Options{}, opts.ExperimentID)
+	success, failures, err := dbutil.ImportFiles(originDB, destDB, logger, opts.ExperimentID)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
-	fmt.Printf("Imported %v file pairs successfully\n", success)
+	logger.Infof("Imported %v file pairs successfully\n", success)
 
 	if failures > 0 {
-		fmt.Printf("Failed to import %v file pairs\n", failures)
+		logger.Errorf("Failed to import %v file pairs\n", failures)
 	}
 }

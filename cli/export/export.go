@@ -13,10 +13,10 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/src-d/code-annotation/server/dbutil"
+	"github.com/src-d/code-annotation/server/service"
 
 	"github.com/jessevdk/go-flags"
 )
@@ -55,23 +55,25 @@ func main() {
 		os.Exit(1)
 	}
 
+	logger := service.NewLogger("dev")
+
 	originDB, err := dbutil.Open(opts.Args.Input, true)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 	defer originDB.Close()
 
 	destDB, err := dbutil.OpenSQLite(opts.Args.Output, false)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 	defer destDB.Close()
 
 	if err = dbutil.Bootstrap(destDB); err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
-	if err := dbutil.Copy(originDB, destDB, dbutil.Options{}); err != nil {
-		log.Fatal(err)
+	if err := dbutil.Copy(originDB, destDB, logger); err != nil {
+		logger.Fatal(err)
 	}
 }

@@ -57,6 +57,8 @@ func (h *Export) List(r *http.Request) (*serializer.Response, error) {
 // Create creates new export file and returns a *serializer.Response
 // with the name of new file
 func (h *Export) Create(r *http.Request) (*serializer.Response, error) {
+	logger := lg.RequestLog(r)
+
 	filepath := fmt.Sprintf("%s/%s-export.db",
 		h.exportsPath, time.Now().Format(time.RFC3339))
 
@@ -74,11 +76,11 @@ func (h *Export) Create(r *http.Request) (*serializer.Response, error) {
 		return nil, err
 	}
 
-	if err := dbutil.Copy(*h.db, destDB, dbutil.Options{}); err != nil {
+	if err := dbutil.Copy(*h.db, destDB, logger); err != nil {
 		return nil, err
 	}
 
-	lg.RequestLog(r).Info("new SQLite file created: " + filepath)
+	logger.Info("new SQLite file created: " + filepath)
 
 	return &serializer.Response{
 		Status: http.StatusOK,

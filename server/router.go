@@ -18,7 +18,7 @@ import (
 
 // Router returns a Handler to serve the code-anotation backend
 func Router(
-	logger *logrus.Logger,
+	logger logrus.FieldLogger,
 	jwt *service.JWT,
 	oauth *service.OAuth,
 	diffService *service.Diff,
@@ -27,7 +27,7 @@ func Router(
 	exportsPath string,
 	version string,
 ) http.Handler {
-
+	logrusLogger := logger.(*logrus.Logger)
 	db := dbWrapper.SQLDB()
 
 	// create repos
@@ -51,7 +51,7 @@ func Router(
 	r := chi.NewRouter()
 
 	r.Use(middleware.Recoverer)
-	r.Use(lg.RequestLogger(logger))
+	r.Use(lg.RequestLogger(logrusLogger))
 	r.Use(cors.New(corsOptions).Handler)
 	r.Use(handler.LoggingTestMiddleware)
 
@@ -110,14 +110,14 @@ func Router(
 	/*
 	 * Testing logs
 	 */
-	r.Get("/destroy", handler.Get(handler.Log(handler.Fatal)))
-	r.Get("/manual-panic", handler.Get(handler.Log(handler.ManualPanic)))
-	r.Get("/panic", handler.Get(handler.Log(handler.Panic)))
-	r.Get("/error", handler.Get(handler.Log(handler.Error)))
-	r.Get("/warn", handler.Get(handler.Log(handler.Warning)))
-	r.Get("/info", handler.Get(handler.Log(handler.Info)))
-	r.Get("/debug", handler.Get(handler.Log(handler.Debug)))
-	r.Get("/unk", handler.Get(handler.Log(handler.Unk)))
+	r.Get("/destroy", handler.APIHandlerFunc(handler.Log(handler.Fatal)))
+	r.Get("/manual-panic", handler.APIHandlerFunc(handler.Log(handler.ManualPanic)))
+	r.Get("/panic", handler.APIHandlerFunc(handler.Log(handler.Panic)))
+	r.Get("/error", handler.APIHandlerFunc(handler.Log(handler.Error)))
+	r.Get("/warn", handler.APIHandlerFunc(handler.Log(handler.Warning)))
+	r.Get("/info", handler.APIHandlerFunc(handler.Log(handler.Info)))
+	r.Get("/debug", handler.APIHandlerFunc(handler.Log(handler.Debug)))
+	r.Get("/unk", handler.APIHandlerFunc(handler.Log(handler.Unk)))
 
 	r.Get("/static/*", static.ServeHTTP)
 	r.Get("/*", static.ServeHTTP)

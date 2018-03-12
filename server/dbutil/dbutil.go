@@ -187,26 +187,9 @@ func Initialize(db DB) error {
 	return nil
 }
 
-// Options for the ImportFiles and Copy methods.
-// Logger is optional, if it is not provided the default stderr will be used.
-type Options struct {
-	Logger logrus.FieldLogger
-}
-
-func (opts *Options) getLogger() logrus.FieldLogger {
-	if opts.Logger != nil {
-		return opts.Logger
-	}
-
-	return logrus.StandardLogger()
-}
-
 // ImportFiles imports pairs of files from the origin to the destination DB.
-// It copies the contents and processes the needed data (md5 hash)
-func ImportFiles(originDB DB, destDB DB, opts Options, experimentID int) (success, failures int64, e error) {
-
-	logger := opts.getLogger()
-
+// It copies the contents and processes the needed data (md5 hash, diff)
+func ImportFiles(originDB DB, destDB DB, logger logrus.FieldLogger, experimentID int) (success, failures int64, e error) {
 	rows, err := destDB.Query(selectExperiment, experimentID)
 	if err != nil {
 		return 0, 0, err
@@ -246,7 +229,7 @@ func ImportFiles(originDB DB, destDB DB, opts Options, experimentID int) (succes
 			&score)
 
 		if err != nil {
-			logger.Printf("Failed to read row from origin DB\nerror: %v\n", err)
+			logger.Errorf("Failed to read row from origin DB\nerror: %v\n", err)
 			failures++
 			continue
 		}
@@ -258,7 +241,7 @@ func ImportFiles(originDB DB, destDB DB, opts Options, experimentID int) (succes
 			experimentID)
 
 		if err != nil {
-			logger.Printf("Failed to insert row\nerror: %v\n", err)
+			logger.Errorf("Failed to insert row\nerror: %v\n", err)
 			failures++
 			continue
 		}
