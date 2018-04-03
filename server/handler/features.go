@@ -9,8 +9,8 @@ import (
 )
 
 // GetFeatures returns a function that returns a *serializer.Response
-// with the list of features for blobId
-func GetFeatures(filePairRepo *repository.FilePairs, featuresRepo *repository.Features) RequestProcessFunc {
+// with the list of features for the pairId from the Request payload
+func GetFeatures(filePairRepo *repository.FilePairs) RequestProcessFunc {
 	return func(r *http.Request) (*serializer.Response, error) {
 		filePairID, err := urlParamInt(r, "pairId")
 		if err != nil {
@@ -22,7 +22,7 @@ func GetFeatures(filePairRepo *repository.FilePairs, featuresRepo *repository.Fe
 			return nil, err
 		}
 
-		featuresA, featuresB, score, err := getFeatures(featuresRepo, filePair)
+		featuresA, featuresB, score, err := getFeatures(filePair)
 		if err != nil {
 			return nil, err
 		}
@@ -33,21 +33,14 @@ func GetFeatures(filePairRepo *repository.FilePairs, featuresRepo *repository.Fe
 
 // TODO (dpordomingo): in the future it should take the UAST of both blobs DB
 // and make a request to ML feature extractor API
-func getFeatures(repo *repository.Features, pair *model.FilePair) ([]*model.Feature, []*model.Feature, *model.Feature, error) {
-	blobIDA := pair.Left.BlobID
-	blobIDB := pair.Right.BlobID
+func getFeatures(pair *model.FilePair) ([]*model.Feature, []*model.Feature, *model.Feature, error) {
+	//blobIDA := pair.Left.BlobID
+	//blobIDB := pair.Right.BlobID
 
-	featuresA, err := repo.GetAll(blobIDA)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	featuresB, err := repo.GetAll(blobIDB)
-	if err != nil {
-		return nil, nil, nil, err
-	}
+	featuresA := []*model.Feature{}
+	featuresB := []*model.Feature{}
 
 	score := model.Feature{Name: "score", Weight: pair.Score}
 
-	return featuresA, featuresB, &score, err
+	return featuresA, featuresB, &score, nil
 }

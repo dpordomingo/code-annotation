@@ -35,7 +35,6 @@ func Router(
 	experimentRepo := repository.NewExperiments(db)
 	assignmentRepo := repository.NewAssignments(db)
 	filePairRepo := repository.NewFilePairs(db)
-	featureRepo := repository.NewFeatures(db)
 
 	// cors options
 	corsOptions := cors.Options{
@@ -92,7 +91,7 @@ func Router(
 		r.Route("/file-pair", func(r chi.Router) {
 			r.Use(requesterACL.Middleware)
 
-			r.Get("/{pairId}/features", handler.APIHandlerFunc(handler.GetFeatures(filePairRepo, featureRepo)))
+			r.Get("/{pairId}/features", handler.APIHandlerFunc(handler.GetFeatures(filePairRepo)))
 		})
 
 		r.Route("/exports", func(r chi.Router) {
