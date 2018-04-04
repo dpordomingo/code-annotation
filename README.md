@@ -31,9 +31,9 @@ The next sections make use of several environment variables to configure the app
 | `CAT_OAUTH_CLIENT_SECRET` | YES | - | GitHub application [OAuth credentials](#github-oauth-tokens) |
 | `CAT_OAUTH_RESTRICT_ACCESS` | | - | [Application access control](#access-control) based on GitHub groups or teams |
 | `CAT_OAUTH_RESTRICT_REQUESTER_ACCESS` | | - | [User role control](#access-control) based on GitHub groups or teams |
-| `CAT_HOST` | | `0.0.0.0` | IP address to bind the HTTP server |
-| `CAT_PORT` | | `8080` | Port address to bind the HTTP server |
-| `CAT_SERVER_URL` | | `<CAT_HOST>:<CAT_PORT>` | URL used to access the application (i.e. public hostname) |
+| `CAT_LISTEN_ADDRESS` | | `0.0.0.0` | IP address to bind the HTTP server |
+| `CAT_LISTEN_PORT` | | `8080` | Port address to bind the HTTP server |
+| `CAT_SERVER_URL` | | `//localhost:<CAT_LISTEN_PORT>` | URL used to access the application (i.e. public hostname) |
 | `CAT_DB_CONNECTION` | | `sqlite:///var/code-annotation/internal.db` | Points to the internal application database. [Read below](#importing-and-exporting-data) for the complete syntax |
 | `CAT_EXPORTS_PATH` | | `./exports` | Folder where the SQLite files will be created when requested from `http://<your-hostname>/export` |
 | `CAT_ENV` | | `production` | Sets the log level. Use `dev` to enable debug log messages |

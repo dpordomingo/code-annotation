@@ -18,8 +18,8 @@ var version = "dev"
 
 type appConfig struct {
 	Env          string `envconfig:"ENV" default:"production"`
-	Host         string `envconfig:"HOST" default:"0.0.0.0"`
-	Port         int    `envconfig:"PORT" default:"8080"`
+	ListenAddr   string `envconfig:"LISTEN_ADDRESS" default:"0.0.0.0"`
+	ListenPort   int    `envconfig:"LISTEN_PORT" default:"8080"`
 	ServerURL    string `envconfig:"SERVER_URL"`
 	DBConn       string `envconfig:"DB_CONNECTION" default:"sqlite:///var/code-annotation/internal.db"`
 	ExportsPath  string `envconfig:"EXPORTS_PATH" default:"./exports"`
@@ -31,7 +31,7 @@ func main() {
 	var conf appConfig
 	envconfig.MustProcess("CAT", &conf)
 	if conf.ServerURL == "" {
-		conf.ServerURL = fmt.Sprintf("//%s:%d", conf.Host, conf.Port)
+		conf.ServerURL = fmt.Sprintf("//localhost:%d", conf.ListenPort)
 	}
 
 	// loger
@@ -71,6 +71,6 @@ func main() {
 	// start the router
 	router := server.Router(logger, jwt, oauth, diffService, static, &db, conf.ExportsPath, version)
 	logger.Info("running...")
-	err = http.ListenAndServe(fmt.Sprintf("%s:%d", conf.Host, conf.Port), router)
+	err = http.ListenAndServe(fmt.Sprintf("%s:%d", conf.ListenAddr, conf.ListenPort), router)
 	logger.Fatal(err)
 }
