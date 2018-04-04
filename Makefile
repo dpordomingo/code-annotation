@@ -95,6 +95,10 @@ gorun:
 ## Compiles the assets, and serve the tool through its API
 serve: | build-frontend build-backend gorun
 
+serve-dev: | build-frontend build-backend
+	CAT_LISTEN_PORT=8000 $(MAKE) gorun &
+	PORT=8080 $(MAKE) dev-frontend
+
 .PHONY: dependencies-frontend build-frontend dev-frontend \
 		dependencies-frontend-development prepare-build build-app \
 		test-frontend lint-frontend \

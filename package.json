@@ -2,6 +2,7 @@
   "name": "code-annotation",
   "version": "0.1.0",
   "private": true,
+  "proxy": "http://127.0.0.1:8000",
   "dependencies": {
     "bootstrap": "3",
     "diff2html": "^2.3.3",
